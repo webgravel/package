@@ -1,1 +1,2 @@
-requires-apt: python-gnupg
+name: 'gravel-package'
+requires-apt: python-gnupg python-yaml

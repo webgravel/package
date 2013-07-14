@@ -7,7 +7,11 @@ while [ "$1" != "" ]; do
 done
 
 DIR="$PWD"
-NAME="$(basename "$DIR")"
+getname() {
+    python -c 'import yaml; print yaml.safe_load(open("Gravelfile"))["name"]'
+}
+
+NAME="$(getname)"
 OUTPUT1="$DIR/.makepkg.unsigned.tar"
 OUTPUT2="$DIR/$NAME.gravelpkg"
 
