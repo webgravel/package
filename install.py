@@ -7,6 +7,7 @@ import sys
 import os
 import yaml
 import subprocess
+import urllib
 
 def warn(*args, **kwargs):
     kwargs['file'] = sys.stderr
@@ -46,7 +47,7 @@ class HTTPRepo:
         self.url = url
 
     def get_package(self, name):
-        return self.url + '/' + name + '.gravelpkg'
+        return urllib.urlopen(self.url + '/' + name + '.gravelpkg').read()
 
 class Installer:
     def __init__(self, home):
