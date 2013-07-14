@@ -114,11 +114,11 @@ class Package:
 
     def trigger(self, name):
         if name in self.gravelfile:
-            print('running trigger %s for %s... [not really]' % (name, self.name))
+            print('running trigger %s for %s...' % (name, self.name))
             if os.fork() == 0:
                 self._run_action(name)
             else:
-                exit = os.wait()
+                pid, exit = os.wait()
                 if exit != 0:
                     raise subprocess.CalledProcessError(exit, '<trigger %s>' % name)
 
