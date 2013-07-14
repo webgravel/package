@@ -8,6 +8,8 @@ import os
 import yaml
 import subprocess
 import urllib
+import tempfile
+import shutil
 
 def warn(*args, **kwargs):
     kwargs['file'] = sys.stderr
@@ -17,7 +19,7 @@ class LocalRepo:
     def __init__(self, path):
         self.path = path
 
-    def get_package(self, name):
+    def fetch_package(self, name):
         names = glob.glob('%s/*/%s.gravelpkg' % (self.path, name))
         direct = '%s/%s.gravelpkg' % (self.path, name)
         if os.path.exists(direct):
@@ -26,7 +28,9 @@ class LocalRepo:
             raise IOError('package %s not found' % name)
         if len(names) > 1:
             warn('found multiple instances of %s' % name)
-        return open(names[0], 'rb').read()
+        f = tempfile.NamedTemporaryFile(delete=False)
+        shutil.copy(names[0], f.name)
+        return f.name
 
 class SSHRepo:
     def __init__(self, url):
@@ -37,17 +41,20 @@ class SSHRepo:
         else:
             self.host, self.port = arg.rsplit(':', 1)
 
-    def get_package(self, name):
-        return subprocess.check_output(['ssh', '-oStrictHostKeyChecking=false',
-                                        '-p', self.port,
-                                        self.host, 'gravelpkg_get', name])
+    def fetch_package(self, name):
+        f = tempfile.NamedTemporaryFile(delete=False)
+        subprocess.check_call(['ssh', '-oStrictHostKeyChecking=false',
+                               '-p', self.port,
+                               self.host, 'gravelpkg_get', name],
+                              stdout=f)
+        return f.name
 
 class HTTPRepo:
     def __init__(self, url):
         self.url = url
 
-    def get_package(self, name):
-        return urllib.urlopen(self.url + '/' + name + '.gravelpkg').read()
+    def fetch_package(self, name):
+        return urllib.urlretrieve(self.url + '/' + name + '.gravelpkg')[0]
 
 class Installer:
     def __init__(self, home):
@@ -83,7 +90,7 @@ class Installer:
             Package(self, name).trigger('preupgrade')
 
         dest = self.home + '/' + name
-        gravelfile.unpack(data=self.repo.get_package(name), dest=dest, gpg=self.gpg)
+        gravelfile.unpack(input=self.repo.fetch_package(name), dest=dest, gpg=self.gpg)
 
         pkg = Package(self, name)
         pkg.install_dep()
