@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 from __future__ import print_function
 
 import gravelfile
@@ -18,11 +18,35 @@ class LocalRepo:
 
     def get_package(self, name):
         names = glob.glob('%s/*/%s.gravelpkg' % (self.path, name))
+        direct = '%s/%s.gravelpkg' % (self.path, name)
+        if os.path.exists(direct):
+            names.append(direct)
         if not names:
             raise IOError('package %s not found' % name)
         if len(names) > 1:
             warn('found multiple instances of %s' % name)
         return open(names[0], 'rb').read()
+
+class SSHRepo:
+    def __init__(self, url):
+        arg = url.split('//')[0]
+        if ':' not in arg:
+            self.host = arg
+            self.port = '22'
+        else:
+            self.host, self.port = arg.rsplit(':', 1)
+
+    def get_package(self, name):
+        return subprocess.check_output(['ssh', '-oStrictHostKeyChecking=false',
+                                        '-p', self.port,
+                                        self.host, 'gravelpkg_get', name])
+
+class HTTPRepo:
+    def __init__(self, url):
+        self.url = url
+
+    def get_package(self, name):
+        return self.url + '/' + name + '.gravelpkg'
 
 class Installer:
     def __init__(self, home):
@@ -34,6 +58,8 @@ class Installer:
         url = self.config['repo']
         if url.startswith('ssh://'):
             self.repo = SSHRepo(url)
+        elif url.startswith(('http://', 'https://')):
+            self.repo = HTTPRepo(url)
         else:
             self.repo = LocalRepo(url)
 
