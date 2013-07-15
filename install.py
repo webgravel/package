@@ -132,8 +132,9 @@ class Package:
 
     def install_symlinks(self):
         for [src, target] in self.gravelfile.get('symlinks', []):
-            if not os.path.exists(target):
-                os.symlink(os.path.join(self.path, src), target)
+            if os.path.islink(target):
+                os.remove(target)
+            os.symlink(os.path.join(self.path, src), target)
 
     def install_dep(self):
         packages = self.gravelfile.get('requires', '').split()
