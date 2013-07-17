@@ -34,7 +34,7 @@ class LocalRepo:
 
 class SSHRepo:
     def __init__(self, url):
-        arg = url.split('//')[0]
+        arg = url.split('//')[1]
         if ':' not in arg:
             self.host = arg
             self.port = '22'
@@ -45,7 +45,8 @@ class SSHRepo:
         f = tempfile.NamedTemporaryFile(delete=False)
         subprocess.check_call(['ssh', '-oStrictHostKeyChecking=false',
                                '-p', self.port,
-                               self.host, 'gravelpkg_get', name],
+                               '-i', '/gravel/system/node/home/.ssh/id_rsa', # TODO
+                               self.host, 'pkgget', name],
                               stdout=f)
         return f.name
 
