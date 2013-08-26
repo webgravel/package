@@ -166,7 +166,8 @@ class Package:
     def _do_start(self):
         print('starting %s...' % self.name)
         if os.fork() == 0:
-            logout = open(self.installer.config['log'] + '/' + self.name + '.log', 'a')
+            logout = open(self.installer.config['log'] + '/' + self.name + '.log', 'a', 1)
+            os.environ['PYTHONUNBUFFERED'] = '1'
             nullin = open('/dev/null')
             os.dup2(nullin.fileno(), 0)
             os.dup2(logout.fileno(), 1)
